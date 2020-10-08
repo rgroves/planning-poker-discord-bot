@@ -20,13 +20,23 @@ client.on("message", (message) => {
       message.channel.send("Game is already in progress in this channel!");
       return;
     }
+
     games.set(message.channel.id, true);
-    message.channel.send("Welcome to planning poker");
-    message.channel.send("Please start your first round with !play [QUESTION]");
     message.channel.send(
-      "For each round you've got 30 seconds to write your guessed number of story points via dm to the bot"
+      "Welcome to Planning Poker!\n" +
+        "\n" +
+        "Start the first round with:\n" +
+        "> !play [STORY]\n" +
+        "\n" +
+        "[STORY] should be the user story for this round, for example:\n" +
+        "> !play As a user I can edit my profile so that it is up-to-date.\n" +
+        "\n" +
+        "You'll have 30 seconds to send me a DM containing a single number representing " +
+        "your estimated story points (an easy way to DM me is to click my name above).\n" +
+        "\n" +
+        "Stop playing at any time with:\n" +
+        "> !end"
     );
-    message.channel.send("You can stop playing by typing !end");
 
     return;
   }
@@ -36,19 +46,27 @@ client.on("message", (message) => {
 
     const question = message.content.split(" ").splice(1).join(" ");
 
-    message.channel.send(`First question: ${question}`);
-    message.channel.send("Please provide your guesses");
+    message.channel.send(
+      `Current question: ${question}\nPlease provide your guesses.`
+    );
 
     Poker.playQuestion(question);
 
     setTimeout(() => {
-      message.channel.send("Time's up!");
-      message.channel.send(
-        "Please enter the number of storypoints with !storypoints [AMOUNT] when you finished discussing"
+      let estimates = Poker.currentAnswers.map(
+        (answer) => `* ${answer.user}: ${answer.points}`
       );
-      for (const answer of Poker.currentAnswers) {
-        message.channel.send(`${answer.user}: ${answer.points}`);
-      }
+
+      message.channel.send(
+        "Time's up! Discuss the estimates provided and then submit the final " +
+          "story points for the story with:\n" +
+          "> !storypoints [FINAL]\n" +
+          "\n" +
+          "Where [FINAL] is the agreed upon amount.\n" +
+          "\n" +
+          "The estimates I received were as follows:\n" +
+          estimates.join("\n")
+      );
     }, 30 * 1000);
 
     return;
@@ -60,21 +78,24 @@ client.on("message", (message) => {
     const storypoints = message.content.split(" ")[1];
 
     message.channel.send(
-      `Added ${storypoints} to your question ${Poker.currentQuestion}`
+      `${storypoints} has been assigned to the story: ${Poker.currentQuestion}`
     );
 
     Poker.finishQuestion(storypoints);
   }
 
   if (message.content === "!end") {
-    message.channel.send("Planning Poker finished");
-    message.channel.send("Here is an overview of your game:");
+    message.channel.send(
+      "Planning Poker has ended.\n\n" + "Here is an overview of your game:"
+    );
+
     if (games.has(message.channel.id)) games.delete(message.channel.id);
 
-    for (const question of Poker.questions)
+    for (const question of Poker.questions) {
       message.channel.send(
-        `Question: ${question.question} Story Points: ${question.storypoints}`
+        `${question.storypoints} story points were assigned to the story: ${question.question}`
       );
+    }
 
     Poker.finishGame();
 
