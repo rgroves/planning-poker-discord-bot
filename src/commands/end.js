@@ -16,7 +16,7 @@ module.exports = {
     // TODO: There should be some sort of check to make sure the following message doesn't exceed 2000 Characters
     message.channel.send(
       [
-        "Planning Poker has ended.",
+        "Planning Poker finished",
         "Here is an overview of your game:\n",
         gameSummaryMessage.join("\n"),
         "",
